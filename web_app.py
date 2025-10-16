@@ -13,8 +13,13 @@ from data_fetcher import CryptoDataFetcher
 from indicators import MarketCycleIndicators
 from interpreter import IndicatorInterpreter
 from config import SUPPORTED_COINS
+from cache import get_cache
+from backtesting import Backtester
 
 app = Flask(__name__)
+
+# Get cache instance
+cache = get_cache()
 
 
 def create_price_chart(df, symbol):
@@ -249,13 +254,28 @@ def api_analyze(symbol):
     if symbol not in SUPPORTED_COINS:
         return jsonify({'error': 'Unsupported cryptocurrency'}), 400
 
+    # Get days parameter from query string, default to 730 (2 years)
+    days = request.args.get('days', default=730, type=int)
+
+    # Validate days parameter
+    if days < 30:
+        days = 30
+    elif days > 3650:  # Max 10 years
+        days = 3650
+
+    # Check cache first
+    cache_key = f"analysis:{symbol}:{days}"
+    cached_result = cache.get(cache_key)
+    if cached_result is not None:
+        return jsonify(cached_result)
+
     try:
         fetcher = CryptoDataFetcher()
         indicators_calc = MarketCycleIndicators()
 
         # Fetch data
         current_data = fetcher.get_current_price(symbol)
-        historical_data = fetcher.get_historical_data(symbol, days=730)
+        historical_data = fetcher.get_historical_data(symbol, days=days)
 
         # Calculate indicators
         results = indicators_calc.analyze_all(historical_data)
@@ -282,12 +302,17 @@ def api_analyze(symbol):
             else:
                 clean_results[key] = value
 
-        return jsonify({
+        result = {
             'current_data': current_data,
             'indicators': clean_results,
             'charts': charts,
             'timestamp': datetime.now().isoformat()
-        })
+        }
+
+        # Cache the result for 5 minutes
+        cache.set(cache_key, result, ttl_seconds=300)
+
+        return jsonify(result)
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -296,6 +321,12 @@ def api_analyze(symbol):
 @app.route('/api/feargreed')
 def api_feargreed():
     """API endpoint for Fear & Greed Index"""
+    # Check cache first
+    cache_key = "fear_greed"
+    cached_result = cache.get(cache_key)
+    if cached_result is not None:
+        return jsonify(cached_result)
+
     try:
         fetcher = CryptoDataFetcher()
         fg_data = fetcher.get_fear_greed_index()
@@ -303,12 +334,17 @@ def api_feargreed():
         chart = create_fear_greed_gauge(fg_data)
         interpretation = IndicatorInterpreter.interpret_fear_greed(fg_data['value'], fg_data['classification'])
 
-        return jsonify({
+        result = {
             'data': fg_data,
             'chart': chart,
             'interpretation': interpretation,
             'timestamp': datetime.now().isoformat()
-        })
+        }
+
+        # Cache for 30 minutes (Fear & Greed updates once a day)
+        cache.set(cache_key, result, ttl_seconds=1800)
+
+        return jsonify(result)
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -317,6 +353,12 @@ def api_feargreed():
 @app.route('/api/compare')
 def api_compare():
     """API endpoint for comparing multiple coins"""
+    # Check cache first
+    cache_key = "comparison:730"  # Using 730 days for comparison
+    cached_result = cache.get(cache_key)
+    if cached_result is not None:
+        return jsonify(cached_result)
+
     try:
         fetcher = CryptoDataFetcher()
         indicators_calc = MarketCycleIndicators()
@@ -342,10 +384,54 @@ def api_compare():
                 'indicators': clean_results
             }
 
-        return jsonify({
+        result = {
             'data': comparison_data,
             'timestamp': datetime.now().isoformat()
-        })
+        }
+
+        # Cache for 5 minutes
+        cache.set(cache_key, result, ttl_seconds=300)
+
+        return jsonify(result)
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/backtest/<symbol>')
+def api_backtest(symbol):
+    """API endpoint for backtesting indicators"""
+    symbol = symbol.upper()
+
+    if symbol not in SUPPORTED_COINS:
+        return jsonify({'error': 'Unsupported cryptocurrency'}), 400
+
+    # Check cache first
+    cache_key = f"backtest:{symbol}"
+    cached_result = cache.get(cache_key)
+    if cached_result is not None:
+        return jsonify(cached_result)
+
+    try:
+        fetcher = CryptoDataFetcher()
+        backtester = Backtester()
+
+        # Fetch maximum historical data for better backtest results
+        historical_data = fetcher.get_historical_data(symbol, days=1825)  # 5 years
+
+        # Run backtest
+        backtest_results = backtester.run_full_backtest(historical_data)
+
+        result = {
+            'symbol': symbol,
+            'backtest_results': backtest_results,
+            'timestamp': datetime.now().isoformat()
+        }
+
+        # Cache for 1 hour (backtest results don't change frequently)
+        cache.set(cache_key, result, ttl_seconds=3600)
+
+        return jsonify(result)
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
