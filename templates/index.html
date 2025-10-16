@@ -3,117 +3,227 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crypto Analyzer - Market Cycle Dashboard</title>
+    <title>Crypto Analyzer</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        * {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
         body {
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            background: #0a0a0f;
             min-height: 100vh;
-            color: #e2e8f0;
+            color: #e4e4e7;
+            letter-spacing: -0.01em;
         }
+
         .card {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(148, 163, 184, 0.1);
-            border-radius: 1rem;
-            padding: 1.5rem;
+            background: #18181b;
+            border: 1px solid #27272a;
+            border-radius: 12px;
+            padding: 2rem;
             margin-bottom: 1.5rem;
+            transition: border-color 0.3s;
         }
-        .signal-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 0.5rem;
-            font-weight: 600;
+
+        .card:hover {
+            border-color: #3f3f46;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
             font-size: 0.875rem;
-            display: inline-block;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            cursor: pointer;
         }
-        .signal-top { background: #ef4444; color: white; }
-        .signal-bottom { background: #10b981; color: white; }
-        .signal-warning { background: #f59e0b; color: white; }
-        .signal-neutral { background: #3b82f6; color: white; }
+
+        .btn-primary {
+            background: #18181b;
+            border-color: #3f3f46;
+            color: #fafafa;
+        }
+
+        .btn-primary:hover {
+            background: #27272a;
+            border-color: #52525b;
+        }
+
+        .btn-primary.active {
+            background: #3b82f6;
+            border-color: #3b82f6;
+        }
+
+        .signal-badge {
+            padding: 0.375rem 0.875rem;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 0.75rem;
+            letter-spacing: 0.025em;
+            display: inline-block;
+            text-transform: uppercase;
+        }
+
+        .signal-top {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .signal-bottom {
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .signal-warning {
+            background: rgba(245, 158, 11, 0.15);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .signal-neutral {
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
         .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,.3);
+            width: 24px;
+            height: 24px;
+            border: 2px solid #27272a;
+            border-top-color: #fafafa;
             border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
+            animation: spin 0.8s linear infinite;
         }
+
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
-        .tab {
+
+        .indicator-card {
+            background: #18181b;
+            border: 1px solid #27272a;
+            border-radius: 10px;
+            padding: 1.25rem;
             cursor: pointer;
-            padding: 0.75rem 1.5rem;
-            border-bottom: 2px solid transparent;
-            transition: all 0.3s;
+            transition: all 0.2s;
         }
-        .tab:hover {
-            background: rgba(59, 130, 246, 0.1);
+
+        .indicator-card:hover {
+            border-color: #3f3f46;
+            transform: translateY(-2px);
         }
-        .tab.active {
-            border-bottom-color: #3b82f6;
-            color: #3b82f6;
-        }
+
         .interpretation-box {
-            background: rgba(15, 23, 42, 0.5);
-            border-left: 4px solid #3b82f6;
-            padding: 1rem;
+            background: #18181b;
+            border: 1px solid #27272a;
+            border-left: 3px solid #3b82f6;
+            padding: 1.25rem;
             margin: 1rem 0;
-            border-radius: 0.5rem;
+            border-radius: 8px;
             white-space: pre-wrap;
-            line-height: 1.6;
+            line-height: 1.7;
+            font-size: 0.9375rem;
+            color: #d4d4d8;
+        }
+
+        .price-big {
+            font-size: 3rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            line-height: 1;
+        }
+
+        h1 {
+            font-weight: 600;
+            letter-spacing: -0.03em;
+        }
+
+        h2, h3 {
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        .divider {
+            height: 1px;
+            background: #27272a;
+            margin: 2rem 0;
+        }
+
+        table {
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        thead tr {
+            border-bottom: 1px solid #27272a;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid #27272a;
+        }
+
+        tbody tr:last-child {
+            border-bottom: none;
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+        }
+
+        th {
+            font-weight: 500;
+            font-size: 0.875rem;
+            color: #a1a1aa;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
     </style>
 </head>
 <body>
-    <div class="container mx-auto px-4 py-8">
+    <div class="max-w-7xl mx-auto px-6 py-12">
         <!-- Header -->
-        <div class="text-center mb-8">
-            <h1 class="text-5xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-                Crypto Market Analyzer
-            </h1>
-            <p class="text-gray-400">Advanced Market Cycle Analysis & Top/Bottom Indicators</p>
+        <div class="mb-12">
+            <h1 class="text-4xl mb-2 text-white">Crypto Market Analyzer</h1>
+            <p class="text-zinc-400 text-sm">Real-time market cycle analysis</p>
         </div>
 
         <!-- Coin Selector -->
         <div class="card">
-            <div class="flex justify-between items-center">
-                <div>
-                    <label class="text-sm text-gray-400 mb-2 block">Select Cryptocurrency</label>
-                    <div class="flex gap-4">
-                        {% for coin in coins %}
-                        <button onclick="loadCoin('{{ coin }}')"
-                                class="coin-btn px-6 py-3 rounded-lg font-semibold transition-all hover:scale-105"
-                                style="background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)">
-                            {{ coin }}
-                        </button>
-                        {% endfor %}
-                    </div>
-                </div>
-                <div>
-                    <button onclick="loadComparison()"
-                            class="px-6 py-3 rounded-lg font-semibold transition-all hover:scale-105"
-                            style="background: linear-gradient(135deg, #10b981 0%, #059669 100%)">
-                        Compare All
+            <div class="flex justify-between items-center flex-wrap gap-4">
+                <div class="flex gap-3">
+                    {% for coin in coins %}
+                    <button onclick="loadCoin('{{ coin }}')" class="btn btn-primary" id="btn-{{ coin }}">
+                        {{ coin }}
                     </button>
-                    <button onclick="loadFearGreed()"
-                            class="px-6 py-3 rounded-lg font-semibold transition-all hover:scale-105 ml-2"
-                            style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%)">
-                        Fear & Greed
+                    {% endfor %}
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="loadComparison()" class="btn btn-primary">
+                        Compare
+                    </button>
+                    <button onclick="loadFearGreed()" class="btn btn-primary">
+                        Sentiment
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- Loading Indicator -->
-        <div id="loading" class="text-center py-8" style="display: none;">
+        <!-- Loading -->
+        <div id="loading" class="text-center py-16" style="display: none;">
             <div class="loading mx-auto mb-4"></div>
-            <p class="text-gray-400">Loading data...</p>
+            <p class="text-zinc-500 text-sm">Loading...</p>
         </div>
 
-        <!-- Main Content Area -->
+        <!-- Content -->
         <div id="content"></div>
     </div>
 
@@ -141,7 +251,7 @@
         }
 
         function formatChange(change) {
-            const color = change >= 0 ? '#10b981' : '#ef4444';
+            const color = change >= 0 ? '#34d399' : '#f87171';
             const symbol = change >= 0 ? '+' : '';
             return `<span style="color: ${color}">${symbol}${change.toFixed(2)}%</span>`;
         }
@@ -149,6 +259,10 @@
         async function loadCoin(symbol) {
             document.getElementById('loading').style.display = 'block';
             document.getElementById('content').innerHTML = '';
+
+            // Update active button
+            document.querySelectorAll('.btn-primary').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('btn-' + symbol).classList.add('active');
 
             try {
                 const response = await fetch(`/api/analyze/${symbol}`);
@@ -161,8 +275,8 @@
                 displayCoinAnalysis(symbol, data);
             } catch (error) {
                 document.getElementById('content').innerHTML = `
-                    <div class="card bg-red-900/20 border-red-500">
-                        <p class="text-red-400">Error: ${error.message}</p>
+                    <div class="card" style="border-color: #dc2626;">
+                        <p style="color: #f87171;">Error: ${error.message}</p>
                     </div>
                 `;
             } finally {
@@ -176,35 +290,35 @@
             const charts = data.charts;
 
             let html = `
-                <!-- Coin Header -->
+                <!-- Price Header -->
                 <div class="card">
                     <div class="flex justify-between items-start">
                         <div>
-                            <h2 class="text-3xl font-bold mb-2">${current.name} (${current.symbol})</h2>
-                            <p class="text-4xl font-bold mb-4">${formatPrice(current.current_price)}</p>
-                            <div class="flex gap-4 text-sm">
+                            <div class="text-zinc-400 text-sm mb-2">${current.name}</div>
+                            <div class="price-big mb-4">${formatPrice(current.current_price)}</div>
+                            <div class="flex gap-6 text-sm">
                                 <div>
-                                    <span class="text-gray-400">24h:</span> ${formatChange(current.price_change_24h)}
+                                    <span class="text-zinc-500">24h</span> ${formatChange(current.price_change_24h)}
                                 </div>
                                 <div>
-                                    <span class="text-gray-400">7d:</span> ${formatChange(current.price_change_7d)}
+                                    <span class="text-zinc-500">7d</span> ${formatChange(current.price_change_7d)}
                                 </div>
                                 <div>
-                                    <span class="text-gray-400">30d:</span> ${formatChange(current.price_change_30d)}
+                                    <span class="text-zinc-500">30d</span> ${formatChange(current.price_change_30d)}
                                 </div>
                             </div>
                         </div>
                         <div class="text-right">
-                            <p class="text-sm text-gray-400">Market Cap</p>
-                            <p class="text-xl font-semibold">$${(current.market_cap / 1e9).toFixed(2)}B</p>
+                            <div class="text-zinc-500 text-xs mb-1">MARKET CAP</div>
+                            <div class="text-xl font-semibold">$${(current.market_cap / 1e9).toFixed(2)}B</div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Overall Assessment -->
-                <div class="card bg-gradient-to-r from-yellow-900/20 to-orange-900/20 border-yellow-500">
-                    <h3 class="text-xl font-bold mb-2">🎯 Overall Market Assessment</h3>
-                    <p class="text-lg">${indicators.overall_assessment}</p>
+                <!-- Assessment -->
+                <div class="card" style="background: rgba(59, 130, 246, 0.05); border-color: rgba(59, 130, 246, 0.2);">
+                    <h3 class="text-lg font-semibold mb-2">Market Assessment</h3>
+                    <p class="text-zinc-300">${indicators.overall_assessment}</p>
                 </div>
 
                 <!-- Price Chart -->
@@ -212,9 +326,9 @@
                     <div id="price-chart"></div>
                 </div>
 
-                <!-- Indicators Summary -->
+                <!-- Indicators Grid -->
                 <div class="card">
-                    <h3 class="text-2xl font-bold mb-4">📊 Market Cycle Indicators</h3>
+                    <h3 class="text-xl font-semibold mb-6">Market Indicators</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             `;
 
@@ -222,11 +336,10 @@
             indicatorKeys.forEach(key => {
                 const ind = indicators[key];
                 html += `
-                    <div class="p-4 rounded-lg bg-slate-800/50 border border-slate-700 cursor-pointer hover:bg-slate-700/50 transition"
-                         onclick="showIndicatorDetails('${key}', '${symbol}')">
-                        <h4 class="font-semibold mb-2">${ind.name}</h4>
+                    <div class="indicator-card">
+                        <div class="text-sm font-medium mb-3 text-zinc-300">${ind.name}</div>
                         <span class="signal-badge ${getSignalClass(ind.signal)}">${ind.signal}</span>
-                        <p class="text-sm text-gray-400 mt-2">${ind.interpretation.substring(0, 80)}...</p>
+                        <p class="text-xs text-zinc-500 mt-3 leading-relaxed">${ind.interpretation.substring(0, 70)}...</p>
                     </div>
                 `;
             });
@@ -235,7 +348,7 @@
                     </div>
                 </div>
 
-                <!-- Detailed Charts -->
+                <!-- Charts Grid -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div class="card">
                         <div id="pi-cycle-chart"></div>
@@ -249,28 +362,38 @@
                     <div id="rainbow-chart"></div>
                 </div>
 
-                <!-- Detailed Interpretations -->
+                <!-- Interpretations -->
                 <div class="card">
-                    <h3 class="text-2xl font-bold mb-4">📖 Detailed Interpretations</h3>
+                    <h3 class="text-xl font-semibold mb-6">Analysis Details</h3>
                     <div id="interpretations"></div>
                 </div>
             `;
 
             document.getElementById('content').innerHTML = html;
 
-            // Render charts
-            Plotly.newPlot('price-chart', JSON.parse(charts.price_chart).data, JSON.parse(charts.price_chart).layout);
-            Plotly.newPlot('pi-cycle-chart', JSON.parse(charts.pi_cycle_chart).data, JSON.parse(charts.pi_cycle_chart).layout);
-            Plotly.newPlot('rsi-chart', JSON.parse(charts.rsi_chart).data, JSON.parse(charts.rsi_chart).layout);
-            Plotly.newPlot('rainbow-chart', JSON.parse(charts.rainbow_chart).data, JSON.parse(charts.rainbow_chart).layout);
+            // Render charts with dark theme
+            const darkLayout = {
+                paper_bgcolor: '#18181b',
+                plot_bgcolor: '#18181b',
+                font: { color: '#a1a1aa', family: 'Inter' }
+            };
+
+            Plotly.newPlot('price-chart', JSON.parse(charts.price_chart).data,
+                {...JSON.parse(charts.price_chart).layout, ...darkLayout});
+            Plotly.newPlot('pi-cycle-chart', JSON.parse(charts.pi_cycle_chart).data,
+                {...JSON.parse(charts.pi_cycle_chart).layout, ...darkLayout});
+            Plotly.newPlot('rsi-chart', JSON.parse(charts.rsi_chart).data,
+                {...JSON.parse(charts.rsi_chart).layout, ...darkLayout});
+            Plotly.newPlot('rainbow-chart', JSON.parse(charts.rainbow_chart).data,
+                {...JSON.parse(charts.rainbow_chart).layout, ...darkLayout});
 
             // Display interpretations
             let interpHtml = '';
             indicatorKeys.forEach(key => {
                 const ind = indicators[key];
                 interpHtml += `
-                    <div class="mb-6">
-                        <h4 class="text-xl font-semibold mb-2">${ind.name}</h4>
+                    <div class="mb-8">
+                        <h4 class="text-base font-semibold mb-3 text-zinc-200">${ind.name}</h4>
                         <div class="interpretation-box">${ind.detailed_interpretation}</div>
                     </div>
                 `;
@@ -292,23 +415,31 @@
 
                 let html = `
                     <div class="card">
-                        <h2 class="text-3xl font-bold mb-4">😱 Crypto Fear & Greed Index</h2>
+                        <h2 class="text-2xl font-semibold mb-6">Crypto Fear & Greed Index</h2>
                         <div id="fg-gauge"></div>
                     </div>
 
                     <div class="card">
-                        <h3 class="text-2xl font-bold mb-4">Interpretation</h3>
+                        <h3 class="text-xl font-semibold mb-4">Interpretation</h3>
                         <div class="interpretation-box">${data.interpretation}</div>
                     </div>
                 `;
 
                 document.getElementById('content').innerHTML = html;
-                Plotly.newPlot('fg-gauge', JSON.parse(data.chart).data, JSON.parse(data.chart).layout);
+
+                const darkLayout = {
+                    paper_bgcolor: '#18181b',
+                    plot_bgcolor: '#18181b',
+                    font: { color: '#a1a1aa', family: 'Inter' }
+                };
+
+                Plotly.newPlot('fg-gauge', JSON.parse(data.chart).data,
+                    {...JSON.parse(data.chart).layout, ...darkLayout});
 
             } catch (error) {
                 document.getElementById('content').innerHTML = `
-                    <div class="card bg-red-900/20 border-red-500">
-                        <p class="text-red-400">Error: ${error.message}</p>
+                    <div class="card" style="border-color: #dc2626;">
+                        <p style="color: #f87171;">Error: ${error.message}</p>
                     </div>
                 `;
             } finally {
@@ -332,64 +463,60 @@
 
                 let html = `
                     <div class="card">
-                        <h2 class="text-3xl font-bold mb-6">🔍 Multi-Coin Comparison</h2>
+                        <h2 class="text-2xl font-semibold mb-6">Market Comparison</h2>
                         <div class="overflow-x-auto">
                             <table class="w-full">
                                 <thead>
-                                    <tr class="border-b border-slate-700">
-                                        <th class="text-left p-3">Metric</th>
-                                        <th class="text-left p-3">BTC</th>
-                                        <th class="text-left p-3">ETH</th>
-                                        <th class="text-left p-3">SOL</th>
+                                    <tr>
+                                        <th>Metric</th>
+                                        <th>BTC</th>
+                                        <th>ETH</th>
+                                        <th>SOL</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                 `;
 
-                // Price row
                 html += `
-                    <tr class="border-b border-slate-800">
-                        <td class="p-3 font-semibold">Current Price</td>
-                        <td class="p-3">${formatPrice(data.BTC.current.current_price)}</td>
-                        <td class="p-3">${formatPrice(data.ETH.current.current_price)}</td>
-                        <td class="p-3">${formatPrice(data.SOL.current.current_price)}</td>
+                    <tr>
+                        <td class="font-medium">Price</td>
+                        <td>${formatPrice(data.BTC.current.current_price)}</td>
+                        <td>${formatPrice(data.ETH.current.current_price)}</td>
+                        <td>${formatPrice(data.SOL.current.current_price)}</td>
                     </tr>
-                    <tr class="border-b border-slate-800">
-                        <td class="p-3 font-semibold">24h Change</td>
-                        <td class="p-3">${formatChange(data.BTC.current.price_change_24h)}</td>
-                        <td class="p-3">${formatChange(data.ETH.current.price_change_24h)}</td>
-                        <td class="p-3">${formatChange(data.SOL.current.price_change_24h)}</td>
+                    <tr>
+                        <td class="font-medium">24h Change</td>
+                        <td>${formatChange(data.BTC.current.price_change_24h)}</td>
+                        <td>${formatChange(data.ETH.current.price_change_24h)}</td>
+                        <td>${formatChange(data.SOL.current.price_change_24h)}</td>
                     </tr>
-                    <tr class="border-b border-slate-800">
-                        <td class="p-3" colspan="4"></td>
-                    </tr>
+                    <tr><td colspan="4" class="py-2"></td></tr>
                 `;
 
-                // Indicators
                 const indicatorMap = {
                     'pi_cycle': 'Pi Cycle',
-                    'two_year_ma': '2Y MA Multiplier',
+                    'two_year_ma': '2Y MA',
                     'rsi': 'RSI',
-                    'rainbow': 'Rainbow Chart',
-                    'mayer': 'Mayer Multiple',
+                    'rainbow': 'Rainbow',
+                    'mayer': 'Mayer',
                     'golden_ratio': 'Golden Ratio'
                 };
 
                 for (const [key, name] of Object.entries(indicatorMap)) {
                     html += `
-                        <tr class="border-b border-slate-800">
-                            <td class="p-3 font-semibold">${name}</td>
-                            <td class="p-3">
+                        <tr>
+                            <td class="font-medium">${name}</td>
+                            <td>
                                 <span class="signal-badge ${getSignalClass(data.BTC.indicators[key].signal)}">
                                     ${data.BTC.indicators[key].signal}
                                 </span>
                             </td>
-                            <td class="p-3">
+                            <td>
                                 <span class="signal-badge ${getSignalClass(data.ETH.indicators[key].signal)}">
                                     ${data.ETH.indicators[key].signal}
                                 </span>
                             </td>
-                            <td class="p-3">
+                            <td>
                                 <span class="signal-badge ${getSignalClass(data.SOL.indicators[key].signal)}">
                                     ${data.SOL.indicators[key].signal}
                                 </span>
@@ -407,12 +534,11 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 `;
 
-                // Overall assessments for each coin
                 ['BTC', 'ETH', 'SOL'].forEach(symbol => {
                     html += `
-                        <div class="card bg-gradient-to-br from-slate-800 to-slate-900">
-                            <h3 class="text-xl font-bold mb-2">${symbol}</h3>
-                            <p class="text-sm">${data[symbol].indicators.overall_assessment}</p>
+                        <div class="card">
+                            <div class="text-xs font-medium text-zinc-500 mb-2">${symbol}</div>
+                            <p class="text-sm text-zinc-300">${data[symbol].indicators.overall_assessment}</p>
                         </div>
                     `;
                 });
@@ -423,8 +549,8 @@
 
             } catch (error) {
                 document.getElementById('content').innerHTML = `
-                    <div class="card bg-red-900/20 border-red-500">
-                        <p class="text-red-400">Error: ${error.message}</p>
+                    <div class="card" style="border-color: #dc2626;">
+                        <p style="color: #f87171;">Error: ${error.message}</p>
                     </div>
                 `;
             } finally {
@@ -432,7 +558,7 @@
             }
         }
 
-        // Load BTC by default on page load
+        // Load BTC by default
         window.addEventListener('load', () => {
             loadCoin('BTC');
         });
