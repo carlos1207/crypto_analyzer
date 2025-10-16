@@ -311,7 +311,7 @@
             document.querySelectorAll('#btn-BTC, #btn-ETH, #btn-SOL').forEach(btn => btn.classList.remove('active'));
             document.getElementById('btn-' + symbol).classList.add('active');
 
-            try:
+            try {
                 const response = await fetch(`/api/analyze/${symbol}?days=${currentDays}`);
                 const data = await response.json();
 
